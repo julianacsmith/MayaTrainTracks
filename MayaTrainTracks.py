@@ -194,4 +194,3 @@ def makeRail(amtOfRails):
 railInput = cmds.promptDialog(message="How many rails to make? >>> ", backgroundColor = [.175, .215, .237])
 amtOfRails = int(cmds.promptDialog(query=True, text=True))
 makeRail(amtOfRails)
-railOffset += 10

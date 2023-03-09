@@ -1,36 +1,69 @@
 import maya.cmds as cmds
 import math
 
+# Sets the shaders of all my objects
+def setShader(r,g,b,object,metal=0.5):
+    shader = cmds.shadingNode("standardSurface", asShader=True)
+    cmds.select(object)
+    cmds.setAttr((shader + ".baseColor"),r,g,b, type="double3")
+    cmds.setAttr((shader + ".metalness"), metal)
+    cmds.hyperShade(assign=shader)
+    
+# Sets kyeframes for animation
+def setKeyFrame(object):
+    startTime = cmds.playbackOptions(query=True, minTime=True)
+    endTime = cmds.playbackOptions(query=True, maxTime=True)
+    
+    cmds.cutKey(object, time=(startTime, endTime), attribute="rotateX")
+    cmds.setKeyframe(object, time=startTime, attribute="rotateX", value=0)
+    cmds.setKeyframe(object, time=endTime, attribute="rotateX", value=720)
+    
+def setKeyFrameTracks(object):
+    startTime = cmds.playbackOptions(query=True, minTime=True)
+    endTime = cmds.playbackOptions(query=True, maxTime=True)
+    
+    cmds.cutKey(object, time=(startTime, endTime), attribute="translateZ")
+    cmds.setKeyframe(object, time=startTime, attribute="translateZ", value=0)
+    cmds.setKeyframe(object, time=endTime, attribute="translateZ", value=-100)
+
+# Makes the roof of my train
 def makeRoof():
     cmds.select( cl=True )
     conductor = cmds.polyCylinder( r=1, h=2, sx=20, sy=1, sz=1, ax=(0, 1, 0), cuv=1, ch=1, name='ConductorRoof' )
     cmds.scale(4.2, 4.2, 6)
     cmds.move(0,7.05,-10.7)
     cmds.polyCut( 'ConductorRoof.f[0:59]', cd='X', df=1, ch=1 )
+    setShader(1,0,0,conductor,0)
     booth = cmds.group(conductor, n="Roof")
     
     roofPart = cmds.polyCylinder(h=8.4, n="RoofPart")
     cmds.move(0,7.05,-5.7)
+    setShader(1,0,0,roofPart,0)
     cmds.parent(roofPart, booth)
     
     roofPart = cmds.polyCylinder(h=8.4, n="RoofPart")
     cmds.move(0,7.05,-7.7)
+    setShader(1,0,0,roofPart,0)
     cmds.parent(roofPart, booth)
     
     roofPart = cmds.polyCylinder(h=8.4, n="RoofPart")
     cmds.move(0,7.05,-9.7)
+    setShader(1,0,0,roofPart,0)
     cmds.parent(roofPart, booth)
     
     roofPart = cmds.polyCylinder(h=8.4, n="RoofPart")
     cmds.move(0,7.05,-11.7)
+    setShader(1,0,0,roofPart,0)
     cmds.parent(roofPart, booth)
     
     roofPart = cmds.polyCylinder(h=8.4, n="RoofPart")
     cmds.move(0,7.05,-13.7)
+    setShader(1,0,0,roofPart,0)
     cmds.parent(roofPart, booth)
     
     roofPart = cmds.polyCylinder(h=8.4, n="RoofPart")
     cmds.move(0,7.05,-15.7)
+    setShader(1,0,0,roofPart,0)
     cmds.parent(roofPart, booth)
     
     cmds.select("Roof")
@@ -39,9 +72,10 @@ def makeRoof():
     roofPart = cmds.polyCube(h=0.5, w=9, d=13, n="RoofPart")
     cmds.rotate(8,0,0)
     cmds.move(-0.1,15.5,4)
-    
+    setShader(10,10,0,roofPart)
     return booth
-
+    
+# Makes circular nails around 2 axes
 def makeCircularNails_xy(amt, radius, x_offset, y_offset, z_offset):
     degree=0
     nails = cmds.group(em = True, name="Nails")
@@ -49,6 +83,7 @@ def makeCircularNails_xy(amt, radius, x_offset, y_offset, z_offset):
         nail = cmds.polyCylinder(h=1, r=0.2, name="TrainNail")
         cmds.move(math.cos(degree)*radius+x_offset,math.sin(degree)*radius+y_offset,z_offset)
         cmds.rotate(90,0,0)
+        setShader(10,10,0,nail)
         cmds.parent(nail, nails)
         degree += (360/amt)*(math.pi/180)
     return nails
@@ -57,14 +92,15 @@ def makeCircularNails_yz(amt, radius, x_offset, y_offset, z_offset):
     degree=0
     nails = cmds.group(em = True, name="Nails")
     for i in range(amt):
-        nail = cmds.polyCylinder(h=1, r=0.2, name="TrainNail")
+        nail = cmds.polyCylinder(h=0.6, r=0.2, name="TrainNail")
         cmds.move(x_offset,math.sin(degree)*radius+y_offset,math.cos(degree)*radius+z_offset)
         cmds.rotate(0,0,90)
+        setShader(10,10,0,nail)
         cmds.parent(nail, nails)
         degree += (360/amt)*(math.pi/180)
     return nails
 
-
+# Makes each wheel
 def makeWheel(wheelNum, radius, spokes, offset_x, offset_y, offset_z):
     wheelBase = cmds.polyCylinder(h=0.5, r=radius, name = "WheelBase")
     cmds.rotate(0,0,90)
@@ -77,27 +113,31 @@ def makeWheel(wheelNum, radius, spokes, offset_x, offset_y, offset_z):
     wheelBase = cmds.polyBoolOp( 'WheelBase', 'WheelBaseDiff', op=2, n='WheelBase' )
     cmds.parent(wheelBase, wheel)
     cmds.delete(("WheelBase" + str(wheelNum)), constructionHistory = True)
+    setShader(1,0,0,("WheelBase" + str(wheelNum)))
     
     angle = 0
     angleInc = 180//spokes
     for i in range(spokes):
         wheelSpoke = cmds.polyCylinder(h=radius*2-1, r=0.2, name = "WheelSpoke")
         cmds.rotate(angle,0,0)
+        setShader(1,0,0,wheelSpoke)
         cmds.parent(wheelSpoke, wheel)
         angle += angleInc
         
     wheelCenter = cmds.polyCylinder(h=1, r=radius/4, name="WheelCenter")
     cmds.rotate(0,0,90)
+    setShader(1,0,0,wheelCenter)
     cmds.parent(wheelCenter, wheel)
     
     wheelNails = makeCircularNails_yz(spokes, radius*0.9, offset_x, offset_y, offset_z)
     cmds.select(wheel)
     cmds.move(offset_x, offset_y, offset_z)
     cmds.parent(wheelNails, wheel)
+    setKeyFrame(wheel)
     
     return wheel
     
-
+# Makes each cart
 def makeCart(wheelBaseNum):
     cart = cmds.group(em=True, name="Cart")
     
@@ -108,10 +148,12 @@ def makeCart(wheelBaseNum):
     cmds.rotate(0,0,90)
     cmds.select("CartRoof.e[24:25]", "CartRoof.e[35:36]", "CartRoof.e[46:47]")
     cmds.polyCloseBorder()
+    setShader(0,0,0.8,roof,0.3)
     cmds.parent(roof, cart)
     
     roofPart = cmds.polyCube(h=3, w=7, d=17, name = "CartRoofPart")
     cmds.move(0,13,0)
+    setShader(0.5,0.5,0.5,roofPart)
     cmds.parent(roofPart, cart)
     
     roofPart1 = cmds.polyCylinder( r=1, h=2, sx=20, name='CartRoofPart1' )
@@ -121,28 +163,34 @@ def makeCart(wheelBaseNum):
     cmds.rotate(0,0,90)
     cmds.select("CartRoofPart1.e[24:25]", "CartRoofPart1.e[35:36]", "CartRoofPart1.e[46:47]")
     cmds.polyCloseBorder()
+    setShader(0.8,0,0,roofPart1, 0.3)
     cmds.parent(roofPart1, cart)
     
     roofRim = cmds.polyCube(h=0.5, w=9, d=21, name = "RoofPartRim")
     cmds.move(0,14,0)
+    setShader(10,0,0,roofRim)
     cmds.parent(roofRim, cart)
 
     roofRim = cmds.polyCube(h=0.5, w=12, d=30, name = "RoofPartRim")
     cmds.move(0,9,0)
+    setShader(0,0,10,roofRim)
     cmds.parent(roofRim, cart)
         
     cartWheelBase = cmds.polyCube(h=3,w=7,d=29, name = "CartWheelBase")
     cmds.move(0,-11,0)
+    setShader(1,0,0,cartWheelBase)
     cmds.parent(cartWheelBase, cart)
     
     cartWheelBaseConnector = cmds.polyCube(h=1,w=2,d=35, name = "CartWheelBaseConnector")
     cmds.move(0,-11,0)
+    setShader(0.5,0.5,0.5,cartWheelBaseConnector)
     cmds.parent(cartWheelBaseConnector, cart)
     
     booth = cmds.polyCylinder(h=8, r=4, name = "Booth")
     cmds.rotate(0,0,90)
     cmds.scale(0.8, 1, 0.4)
     cmds.move(0,-5,-10.25)
+    setShader(1,0,0,booth,0.1)
     cmds.parent(booth, cart)
     
     cmds.duplicate("Booth")
@@ -155,6 +203,7 @@ def makeCart(wheelBaseNum):
     cmds.rotate(0,90,90)
     cmds.scale(0.6, 1, 0.4)
     cmds.move(0,-8,-8)
+    setShader(1,0,0,booth, 0.1)
     cmds.parent(booth, cart)
     
     cmds.duplicate("BoothSeat")
@@ -169,9 +218,16 @@ def makeCart(wheelBaseNum):
         if flip == -1:
             wheel = makeWheel(wheelBaseNum, 4, 8, flip*5.5,-12,8.5-8.5*i)
             wheels.append(wheel)
+            
+            wheelRod = cmds.polyCylinder(h=10, name = "wheelRod")
+            cmds.move(0,-12,8.5-8.5*i)
+            cmds.rotate(0,0,90)
+            setShader(1,0,0,wheelRod)
+            cmds.parent(wheelRod, cart)
         else:
             wheel = makeWheel(wheelBaseNum, 4, 8, flip*5.5,-12,8.5-8.5*(i-3))
             wheels.append(wheel)
+ 
         if i == 2:
             flip = 1
         wheelBaseNum += 1
@@ -184,11 +240,13 @@ def makeCart(wheelBaseNum):
     
     for i in range(2):
         cartBaseTrim = cmds.polyCube(h=20, name = "CartBaseTrim")
-        cmds.move(5,0,flip*12.5)
+        cmds.move(4.7,0,flip*12.2)
+        setShader(0.6, 0, 0.2, cartBaseTrim)
         cmds.parent(cartBaseTrim, cart)
         
         cartBaseTrim = cmds.polyCube(h=20, name = "CartBaseTrim")
-        cmds.move(-5,0,flip*12.5)
+        cmds.move(-4.7,0,flip*12.2)
+        setShader(0.6, 0, 0.2, cartBaseTrim)
         cmds.parent(cartBaseTrim, cart)
         flip = -1
     
@@ -219,74 +277,89 @@ def makeCart(wheelBaseNum):
     
     cmds.polyCBoolOp("Cart1Base", "Cart1Diff", op=2, name="CartFrame")
     cmds.delete("CartFrame", constructionHistory = True)
+    setShader(0.8,1,1,"CartFrame")
     cmds.parent("CartFrame", cart)
     
     return cart 
        
-
+# Makes the locomative. Like the main train
 def makeTrain():
     body = cmds.polyCylinder(h=12, r=3, name="TrainBody")
     cmds.rotate(90,0,0)
     cmds.move(0,1,0)
+    setShader(0.1,0.1,0.1,body)
     Train = cmds.group(body, name="Train")
     
     light = cmds.polyCylinder(h=1, r=2, name="TrainLight")
     cmds.rotate(90,0,0)
     cmds.move(0,1,6)
+    setShader(1.0,0.8,0,light,1)
     cmds.parent(light, Train)
     
     rim = cmds.polyCylinder(h=1, r=3.2,name="TrainRimMid")
     cmds.move(0,1,0)
     cmds.rotate(90,0,0)
+    setShader(10,10,0,rim)
     cmds.parent(rim, Train)
     
     rim = cmds.polyCylinder(h=1, r=3.2,name="TrainRimFront")
     cmds.rotate(90,0,0)
     cmds.move(0,1,5)
+    setShader(10,10,0,rim)
     cmds.parent(rim, Train)
     
     rim = cmds.polyCylinder(h=1, r=3.2,name="TrainRimBack")
     cmds.rotate(90,0,0)
     cmds.move(0,1,-5)
+    setShader(10,10,0,rim)
     cmds.parent(rim, Train)
     
     rim = cmds.polyCube(h=0.7, w=6.3, d=10, n="TrainRimHalf")
     cmds.move(0,1,0)
+    setShader(10,10,0,rim)
     cmds.parent(rim, Train)
     
-    base = cmds.polyCube(h=2, w=4, d=20, name="TrainBase")
+    base = cmds.polyCube(h=2, w=6, d=20, name="TrainBase")
     cmds.move(0,-3,-3)
+    setShader(1,0,0,base)
     cmds.parent(base, Train)
     
     trainBaseConnector = cmds.polyCube(h=0.5,w=1.6,d=15, name = "TrainBaseConnector")
     cmds.move(0,-3.8,-16)
+    setShader(0.5,0.5,0.5,trainBaseConnector)
     cmds.parent(trainBaseConnector, Train)
     
     smokeStack = cmds.polyCylinder(h=6, name="SmokeStackPipe")
     cmds.move(0,4.5,2.5)
+    setShader(1.0,0.8,0,smokeStack,1)
     cmds.parent(smokeStack, Train)
     
     smokeStack = cmds.polyCylinder(h=2, r=1.25, name="SmokeStackPipeBase")
     cmds.move(0,3.5,2.5)
+    setShader(1.0,0.8,0,smokeStack,1)
     cmds.parent(smokeStack, Train)
     
-    smokeStack = cmds.polyCone(h=4, r=2.5, name ="SmokeStackFlare")
+    smokeStack = cmds.polyCone(h=4, r=2.5, sx=8, name ="SmokeStackFlare")
     cmds.rotate(180,0,0)
     cmds.move(0,7,2.5)
+    setShader(1.0,0.8,0,smokeStack,1)
     cmds.parent(smokeStack, Train)
     
-    smokeStack = cmds.polyCylinder(h=1.5, r=2.5, name ="SmokeStackFlareTop")
+    smokeStack = cmds.polyCylinder(h=1.5, r=2.5, sx=8, name ="SmokeStackFlareTop")
     cmds.move(0, 9.75, 2.5)
-    cmds.select("SmokeStackFlareTop.e[20:39]")
+    cmds.select("SmokeStackFlareTop.e[8:15]")
     cmds.scale(0.5,0,0.5)
+    setShader(1.0,0.8,0,smokeStack,1)
     cmds.parent(smokeStack, Train)
     
     conductor = cmds.polyCube(h=8, w=7, d=9, name = "ConductorBooth")
     cmds.move(0,0,-10)
+    setShader(0.1,0.1,0.1,conductor)
     cmds.parent(conductor, Train)
     
-    conductor = cmds.polyCube(h=6, w=7, d=3, name = "ConductorWindow")
+    conductor = cmds.polyCube(h=6, w=6.5, d=2.5, name = "ConductorWindow")
     cmds.move(0,5,-7)
+    setShader(0.1,0.1,0.1,conductor)
     cmds.parent(conductor, Train)
     
     booth = makeRoof()
@@ -301,6 +374,7 @@ def makeTrain():
     conductor = cmds.polyBoolOp( 'ConductorBooth', 'ConductorBoothDifference', op=2, n='ConductorBooth' )
     cmds.parent(conductor, Train)
     cmds.delete("ConductorBooth1", constructionHistory = True)
+    setShader(1,0,0,"ConductorBooth1")
     
     cowCatcher = cmds.polyCube(h=4, w=7, d=0.5, n= "CowCatcher")
     cmds.move(0,3.5,22)
@@ -319,6 +393,7 @@ def makeTrain():
     newCatcher = cmds.polyCBoolOp("CowCatcher", "CatcherDiff", op=2, n="CowCatcher")
     cmds.delete("CowCatcher1", constructionHistory = True)
     cmds.move(0,-7,-15)
+    setShader(1,0,0,"CowCatcher1")
     cmds.parent("CowCatcher1", Train)
     
     rimNails = makeCircularNails_xy(12, 2.5, 0, 1, 5.6)
@@ -327,13 +402,13 @@ def makeTrain():
     cmds.select(Train)
     cmds.move(0,6,0)
 
-    
-
+# Makes th train tracks
 def makeRail(offSet):
     trackPart = cmds.group(em=True, name="TrackSlat")
     
     # Make Slat/Sleeper
     slat = cmds.polyCube(w=9, h=0.2, name="Slat")
+    setShader(0.42,0.31,0.18,slat,0.2)
     nails = cmds.group(slat, name = "nails")
        
     flip = -1
@@ -452,17 +527,28 @@ makeTrain()
 
 # Big Wheels
 
-makeWheel(1, 5, 7, 4, 4.5, -10)
-makeWheel(2, 5, 7, -4, 4.5, -10)
+makeWheel(1, 5, 7, 4, 4.75, -10)
+makeWheel(2, 5, 7, -4, 4.75, -10)
 
 # Small Wheels
 
-makeWheel(3, 2.5, 6, 3, 2, 2.5)
-makeWheel(4, 2.5, 6, -3, 2, 2.5)
-makeWheel(5, 2.5, 6, 3, 2, -2.5)
-makeWheel(6, 2.5, 6, -3, 2, -2.5)
+makeWheel(3, 2.5, 6, 4, 2.2, 2.5)
+makeWheel(4, 2.5, 6, -4, 2.2, 2.5)
 
-MainTrain = cmds.group("Train", "Wheel", "Wheel1", "Wheel2", "Wheel3", "Wheel4", "Wheel5", name="MainTrain")
+wheelRod = cmds.polyCylinder(h=8, r=0.5, name = "wheelRod")
+cmds.move(0,2.2, 2.5)
+cmds.rotate(0,0,90)
+setShader(1,0,0,wheelRod)
+
+makeWheel(5, 2.5, 6, 4, 2.2, -2.5)
+makeWheel(6, 2.5, 6, -4, 2.2, -2.5)
+
+wheelRod2 = cmds.polyCylinder(h=8, r=0.5, name = "wheelRod")
+cmds.move(0,2.2, -2.5)
+cmds.rotate(0,0,90)
+setShader(1,0,0,wheelRod2)
+
+MainTrain = cmds.group("Train", "Wheel", "Wheel1", "Wheel2", "Wheel3", "Wheel4", "Wheel5", wheelRod, wheelRod2, name="MainTrain")
 cmds.move(0,1.3,15)
 
 wheelBaseNum = 7
@@ -472,9 +558,9 @@ cmds.scale(0.8,0.5,0.5)
 cmds.move(0,9,-12)
 
 for i in range(1,numCarts):
-    cartTest = cmds.duplicate(cartTest)
+    cartTest = cmds.duplicate(cartTest, ic=True)
     cmds.move(0,9,(-12-(16*i)))
     
 cmds.select("Tracks")
-cmds.move(0,0,-150)
 cmds.scale(1.3,1,1)
+setKeyFrameTracks("Tracks")
